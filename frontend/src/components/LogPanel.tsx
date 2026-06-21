@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CheckCircle2, Circle, Loader2, Sparkles, XCircle } from "lucide-react";
+import { Check, CheckCircle2, Circle, Copy, Loader2, Sparkles, XCircle } from "lucide-react";
 
 import { NODE_LABELS, PIPELINE, type NodeId, type NodeStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -102,6 +102,45 @@ const MD_COMPONENTS = {
   ),
 };
 
+function FinalAnswer({ markdown }: { markdown: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable (e.g. insecure context) — fail silently */
+    }
+  }
+
+  return (
+    <div className="p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+          <Sparkles className="h-3.5 w-3.5" />
+          Final Answer
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label="Copy final answer to clipboard"
+          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <div className="rounded-lg border border-border bg-background/60 p-4">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+          {markdown}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
 export function LogPanel() {
   const nodes = useRunStore((s) => s.nodes);
   const logs = useRunStore((s) => s.logs);
@@ -131,19 +170,7 @@ export function LogPanel() {
         <AgentLog key={id} node={id} runtime={nodes[id]} text={logs[id]} />
       ))}
 
-      {finalOutput && (
-        <div className="p-4">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            Final Answer
-          </div>
-          <div className="rounded-lg border border-border bg-background/60 p-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
-              {finalOutput}
-            </ReactMarkdown>
-          </div>
-        </div>
-      )}
+      {finalOutput && <FinalAnswer markdown={finalOutput} />}
 
       <div ref={bottomRef} />
     </div>
