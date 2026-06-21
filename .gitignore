@@ -1,0 +1,28 @@
+# Planning notes (local only)
+Stages/
+
+# ---- Python / backend ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+*.db
+*.sqlite3
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# ---- Editors / OS ----
+.DS_Store
+.idea/
+.vscode/
+*.log

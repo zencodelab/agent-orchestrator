@@ -1,0 +1,45 @@
+# AgentForge — full stack in two containers (+ optional Redis).
+#
+#   docker compose up --build           # backend + frontend
+#   docker compose --profile scale up   # also start Redis (see Design Decisions)
+#
+# Put real keys in backend/.env (copy from backend/.env.example). With no keys
+# the stack runs in deterministic mock mode and is fully demoable.
+
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      - DATABASE_URL=sqlite:////data/agentforge.db
+      - CORS_ORIGINS=http://localhost:5173,http://localhost
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+  # Optional: not wired into the app for v1. It's here as the documented upgrade
+  # path for fanning SSE across multiple backend instances (pub/sub) and sharing
+  # run history out of process. Enable with `--profile scale`.
+  redis:
+    image: redis:7-alpine
+    profiles: ["scale"]
+    ports:
+      - "6379:6379"
+
+volumes:
+  backend_data:
