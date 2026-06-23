@@ -6,6 +6,8 @@ AgentForge runs a [LangGraph](https://langchain-ai.github.io/langgraph/) pipelin
 
 It runs **fully offline with no API keys** thanks to a deterministic mock LLM, so you can demo the entire streaming architecture in one command.
 
+**▶️ Live demo:** **https://zencodelab.github.io/agent-orchestrator/** — a static GitHub Pages build that runs the full UI with an in-browser mock backend (no server). Runs are simulated and persisted to `localStorage`, so streaming, history, and replay all work standalone. For real GPT-4o output, run the FastAPI backend locally (see below). The site is published from the `gh-pages` branch — re-deploy after changes with `./scripts/deploy-pages.sh`.
+
 ---
 
 ## Highlights

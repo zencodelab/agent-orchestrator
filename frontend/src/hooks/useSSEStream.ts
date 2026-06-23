@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { api } from "@/lib/api";
+import { DEMO, demoStreamRun } from "@/lib/demo";
 import type { SSEEvent } from "@/lib/types";
 import { useRunStore } from "@/store/useRunStore";
 
@@ -38,6 +39,19 @@ export function useSSEStream() {
   useEffect(() => {
     if (!streamingRunId) return;
     const runId = streamingRunId;
+
+    // Demo build (no backend): replay the in-browser simulation instead of fetching.
+    if (DEMO) {
+      return demoStreamRun(runId, {
+        getLastSeq: () => useRunStore.getState().lastSeq,
+        onEvent: (ev) => useRunStore.getState().applyEvent(runId, ev),
+        onDone: () => {
+          useRunStore.getState().finishStreaming();
+          api.listRuns().then(useRunStore.getState().setHistory).catch(() => {});
+        },
+      });
+    }
+
     let cancelled = false;
     let attempt = 0;
     const controller = new AbortController();
