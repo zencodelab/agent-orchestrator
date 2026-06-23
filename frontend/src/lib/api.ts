@@ -1,3 +1,10 @@
+import {
+  DEMO,
+  demoCreateRun,
+  demoGetRun,
+  demoHealth,
+  demoListRuns,
+} from "./demo";
 import type {
   CreateRunResponse,
   HealthResponse,
@@ -19,10 +26,12 @@ async function json<T>(res: Response): Promise<T> {
 
 export const api = {
   health(): Promise<HealthResponse> {
+    if (DEMO) return demoHealth();
     return fetch(`${BASE}/api/health`).then((r) => json<HealthResponse>(r));
   },
 
   createRun(query: string, model: ModelId): Promise<CreateRunResponse> {
+    if (DEMO) return demoCreateRun(query, model);
     return fetch(`${BASE}/api/runs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -31,10 +40,12 @@ export const api = {
   },
 
   listRuns(): Promise<RunSummary[]> {
+    if (DEMO) return demoListRuns();
     return fetch(`${BASE}/api/runs`).then((r) => json<RunSummary[]>(r));
   },
 
   getRun(id: string): Promise<RunDetail> {
+    if (DEMO) return demoGetRun(id);
     return fetch(`${BASE}/api/runs/${id}`).then((r) => json<RunDetail>(r));
   },
 
