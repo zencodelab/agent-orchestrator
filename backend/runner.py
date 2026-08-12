@@ -153,6 +153,20 @@ def get_all_events(run_id: str) -> list[RunEvent]:
     return get_events_after(run_id, 0)
 
 
+def delete_run(run_id: str) -> bool:
+    """Delete a run and its events. Returns False if the run doesn't exist."""
+    with get_session() as session:
+        run = session.get(Run, run_id)
+        if run is None:
+            return False
+        stmt = select(RunEvent).where(RunEvent.run_id == run_id)
+        for event in session.exec(stmt):
+            session.delete(event)
+        session.delete(run)
+        session.commit()
+        return True
+
+
 # --------------------------------------------------------------------------- #
 # Public entry points
 # --------------------------------------------------------------------------- #

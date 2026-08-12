@@ -86,6 +86,17 @@ async def list_runs() -> list[RunSummary]:
     ]
 
 
+@app.delete("/api/runs/{run_id}", status_code=204)
+async def delete_run(run_id: str) -> None:
+    run = await asyncio.to_thread(runner.get_run, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    if run.status in (RunStatus.pending, RunStatus.running):
+        raise HTTPException(status_code=409, detail="cannot delete a run that is still in progress")
+    await asyncio.to_thread(runner.delete_run, run_id)
+    runner.run_manager.close_channel(run_id)
+
+
 @app.get("/api/runs/{run_id}", response_model=RunDetail)
 async def get_run(run_id: str) -> RunDetail:
     run = await asyncio.to_thread(runner.get_run, run_id)
