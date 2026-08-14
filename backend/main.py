@@ -12,7 +12,7 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -71,8 +71,11 @@ async def create_run(body: CreateRunRequest) -> CreateRunResponse:
 
 
 @app.get("/api/runs", response_model=list[RunSummary])
-async def list_runs() -> list[RunSummary]:
-    runs = await asyncio.to_thread(runner.list_runs)
+async def list_runs(
+    limit: int = Query(default=50, ge=1, le=200),
+    status: RunStatus | None = None,
+) -> list[RunSummary]:
+    runs = await asyncio.to_thread(runner.list_runs, limit, status)
     return [
         RunSummary(
             id=r.id,
