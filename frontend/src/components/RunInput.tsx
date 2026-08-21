@@ -14,6 +14,9 @@ const EXAMPLES = [
   "What are the trade-offs of vector databases for RAG?",
 ];
 
+const MAX_QUERY_LENGTH = 2000;
+const WARN_THRESHOLD = 0.9;
+
 export function RunInput() {
   const query = useRunStore((s) => s.query);
   const model = useRunStore((s) => s.model);
@@ -27,9 +30,11 @@ export function RunInput() {
   const [error, setError] = useState<string | null>(null);
   const isRunning = runStatus === "running" || submitting;
 
+  const isOverLimit = query.length > MAX_QUERY_LENGTH;
+
   async function run() {
     const q = query.trim();
-    if (!q || isRunning) return;
+    if (!q || isRunning || isOverLimit) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -72,7 +77,7 @@ export function RunInput() {
           <option value="gpt-4o">gpt-4o</option>
         </Select>
 
-        <Button onClick={() => void run()} disabled={isRunning || !query.trim()}>
+        <Button onClick={() => void run()} disabled={isRunning || !query.trim() || isOverLimit}>
           {isRunning ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -103,11 +108,23 @@ export function RunInput() {
         </div>
       </div>
 
-      {error && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
-          {error}
-        </p>
-      )}
+      <div className="mt-2 flex items-center justify-between">
+        {error ? (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        ) : (
+          <span />
+        )}
+        {query.length > MAX_QUERY_LENGTH * WARN_THRESHOLD && (
+          <span
+            className={`text-xs ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}
+            aria-live="polite"
+          >
+            {query.length}/{MAX_QUERY_LENGTH}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
