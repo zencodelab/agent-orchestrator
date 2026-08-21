@@ -133,9 +133,12 @@ def get_run(run_id: str) -> Run | None:
         return session.get(Run, run_id)
 
 
-def list_runs(limit: int = 50) -> list[Run]:
+def list_runs(limit: int = 50, status: RunStatus | None = None) -> list[Run]:
     with get_session() as session:
-        stmt = select(Run).order_by(Run.created_at.desc()).limit(limit)
+        stmt = select(Run).order_by(Run.created_at.desc())
+        if status is not None:
+            stmt = stmt.where(Run.status == status)
+        stmt = stmt.limit(limit)
         return list(session.exec(stmt))
 
 
@@ -151,6 +154,20 @@ def get_events_after(run_id: str, after_seq: int) -> list[RunEvent]:
 
 def get_all_events(run_id: str) -> list[RunEvent]:
     return get_events_after(run_id, 0)
+
+
+def delete_run(run_id: str) -> bool:
+    """Delete a run and its events. Returns False if the run doesn't exist."""
+    with get_session() as session:
+        run = session.get(Run, run_id)
+        if run is None:
+            return False
+        stmt = select(RunEvent).where(RunEvent.run_id == run_id)
+        for event in session.exec(stmt):
+            session.delete(event)
+        session.delete(run)
+        session.commit()
+        return True
 
 
 # --------------------------------------------------------------------------- #
