@@ -68,6 +68,8 @@ export function RunHistory() {
                 <button
                   type="button"
                   onClick={() => void open(run)}
+                  aria-current={run.id === currentRunId ? "true" : undefined}
+                  aria-label={`${run.query} — ${run.status}, ${formatTime(run.created_at)}`}
                   className={cn(
                     "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
                     run.id === currentRunId && "bg-accent/80",
