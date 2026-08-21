@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -27,6 +29,12 @@ from models import (
     RunStatus,
     RunSummary,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("agentforge")
 
 settings = get_settings()
 
@@ -52,6 +60,22 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log each request's method, path, status, and duration for basic observability."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "%s %s -> %d (%.1fms)",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    return response
+
+
 @app.get("/api/health")
 async def health() -> dict:
     return {"status": "ok", "mock_mode": settings.mock_mode, "real_search": settings.use_real_search}
@@ -71,8 +95,11 @@ async def create_run(body: CreateRunRequest) -> CreateRunResponse:
 
 
 @app.get("/api/runs", response_model=list[RunSummary])
-async def list_runs() -> list[RunSummary]:
-    runs = await asyncio.to_thread(runner.list_runs)
+async def list_runs(
+    limit: int = Query(default=50, ge=1, le=200),
+    status: RunStatus | None = None,
+) -> list[RunSummary]:
+    runs = await asyncio.to_thread(runner.list_runs, limit, status)
     return [
         RunSummary(
             id=r.id,
@@ -84,6 +111,17 @@ async def list_runs() -> list[RunSummary]:
         )
         for r in runs
     ]
+
+
+@app.delete("/api/runs/{run_id}", status_code=204)
+async def delete_run(run_id: str) -> None:
+    run = await asyncio.to_thread(runner.get_run, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    if run.status in (RunStatus.pending, RunStatus.running):
+        raise HTTPException(status_code=409, detail="cannot delete a run that is still in progress")
+    await asyncio.to_thread(runner.delete_run, run_id)
+    runner.run_manager.close_channel(run_id)
 
 
 @app.get("/api/runs/{run_id}", response_model=RunDetail)

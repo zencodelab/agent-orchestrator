@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, CheckCircle2, Circle, Copy, Loader2, Sparkles, XCircle } from "lucide-react";
+import { Check, CheckCircle2, Circle, Copy, Download, Loader2, Sparkles, XCircle } from "lucide-react";
 
 import { NODE_LABELS, PIPELINE, type NodeId, type NodeStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -115,6 +115,16 @@ function FinalAnswer({ markdown }: { markdown: string }) {
     }
   }
 
+  function handleDownload() {
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "final-answer.md";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="p-4">
       <div className="mb-2 flex items-center justify-between">
@@ -122,15 +132,26 @@ function FinalAnswer({ markdown }: { markdown: string }) {
           <Sparkles className="h-3.5 w-3.5" />
           Final Answer
         </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label="Copy final answer to clipboard"
-          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownload}
+            aria-label="Download final answer as Markdown"
+            className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            aria-label="Copy final answer to clipboard"
+            className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
       </div>
       <div className="rounded-lg border border-border bg-background/60 p-4">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>

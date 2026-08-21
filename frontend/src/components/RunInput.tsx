@@ -109,7 +109,13 @@ export function RunInput() {
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        {error ? <p className="text-xs text-destructive">{error}</p> : <span />}
+        {error ? (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        ) : (
+          <span />
+        )}
         {query.length > MAX_QUERY_LENGTH * WARN_THRESHOLD && (
           <span
             className={`text-xs ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}

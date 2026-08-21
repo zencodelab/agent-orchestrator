@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { RunStatus, RunSummary } from "@/lib/types";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatDuration, formatTime } from "@/lib/utils";
 import { useRunStore } from "@/store/useRunStore";
 
 const BADGE_VARIANT: Record<RunStatus, "idle" | "running" | "completed" | "error"> = {
@@ -68,6 +68,8 @@ export function RunHistory() {
                 <button
                   type="button"
                   onClick={() => void open(run)}
+                  aria-current={run.id === currentRunId ? "true" : undefined}
+                  aria-label={`${run.query} — ${run.status}, ${formatTime(run.created_at)}`}
                   className={cn(
                     "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
                     run.id === currentRunId && "bg-accent/80",
@@ -76,7 +78,12 @@ export function RunHistory() {
                   <span className="line-clamp-2 text-xs text-slate-200">{run.query}</span>
                   <span className="flex w-full items-center justify-between">
                     <StatusBadge status={run.status} />
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      {(run.status === "completed" || run.status === "error") && (
+                        <span title="Run duration">
+                          {formatDuration(run.created_at, run.updated_at)}
+                        </span>
+                      )}
                       {formatTime(run.created_at)}
                     </span>
                   </span>
