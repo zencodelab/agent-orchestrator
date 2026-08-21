@@ -57,8 +57,12 @@ class RunEvent(SQLModel, table=True):
 # --------------------------------------------------------------------------- #
 # API DTOs
 # --------------------------------------------------------------------------- #
+# Kept in sync with the frontend's RunInput character counter/cap.
+MAX_QUERY_LENGTH = 2000
+
+
 class CreateRunRequest(BaseModel):
-    query: str
+    query: str = Field(max_length=MAX_QUERY_LENGTH)
     model: str = "gpt-4o-mini"
     # Only used for demoing the error path; the UI never sets it.
     simulate_error: Optional[str] = None
