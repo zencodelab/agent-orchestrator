@@ -44,6 +44,24 @@ def test_list_runs_respects_limit():
     assert len(runner.list_runs(limit=2)) == 2
 
 
+def test_list_runs_filters_by_search():
+    runner._create_run_row("summarize the quarterly report", "gpt-4o-mini", None)
+    runner._create_run_row("plan a trip to Kyoto", "gpt-4o-mini", None)
+
+    runs = runner.list_runs(search="quarterly")
+
+    assert len(runs) == 1
+    assert runs[0].query == "summarize the quarterly report"
+
+
+def test_list_runs_search_is_case_insensitive():
+    runner._create_run_row("Summarize the Quarterly Report", "gpt-4o-mini", None)
+
+    runs = runner.list_runs(search="quarterly")
+
+    assert len(runs) == 1
+
+
 def test_set_status_updates_run():
     run = runner._create_run_row("q", "gpt-4o-mini", None)
 

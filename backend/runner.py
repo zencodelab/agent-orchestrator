@@ -133,11 +133,13 @@ def get_run(run_id: str) -> Run | None:
         return session.get(Run, run_id)
 
 
-def list_runs(limit: int = 50, status: RunStatus | None = None) -> list[Run]:
+def list_runs(limit: int = 50, status: RunStatus | None = None, search: str | None = None) -> list[Run]:
     with get_session() as session:
         stmt = select(Run).order_by(Run.created_at.desc())
         if status is not None:
             stmt = stmt.where(Run.status == status)
+        if search:
+            stmt = stmt.where(Run.query.ilike(f"%{search}%"))
         stmt = stmt.limit(limit)
         return list(session.exec(stmt))
 
