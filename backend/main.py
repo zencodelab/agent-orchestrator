@@ -2,7 +2,7 @@
 
 Endpoints
   POST /api/runs                 -> start a run, returns {run_id, status}
-  GET  /api/runs                 -> list past runs (newest first)
+  GET  /api/runs                 -> list past runs (newest first, paginated via limit/offset)
   GET  /api/runs/{id}            -> full detail (all events + final output)
   GET  /api/runs/{id}/stream     -> SSE stream of execution events
 """
@@ -104,9 +104,10 @@ async def create_run(body: CreateRunRequest) -> CreateRunResponse:
 @app.get("/api/runs", response_model=list[RunSummary])
 async def list_runs(
     limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     status: RunStatus | None = None,
 ) -> list[RunSummary]:
-    runs = await asyncio.to_thread(runner.list_runs, limit, status)
+    runs = await asyncio.to_thread(runner.list_runs, limit, status, offset)
     return [
         RunSummary(
             id=r.id,

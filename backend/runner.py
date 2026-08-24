@@ -133,12 +133,12 @@ def get_run(run_id: str) -> Run | None:
         return session.get(Run, run_id)
 
 
-def list_runs(limit: int = 50, status: RunStatus | None = None) -> list[Run]:
+def list_runs(limit: int = 50, status: RunStatus | None = None, offset: int = 0) -> list[Run]:
     with get_session() as session:
         stmt = select(Run).order_by(Run.created_at.desc())
         if status is not None:
             stmt = stmt.where(Run.status == status)
-        stmt = stmt.limit(limit)
+        stmt = stmt.offset(offset).limit(limit)
         return list(session.exec(stmt))
 
 

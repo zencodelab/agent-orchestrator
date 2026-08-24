@@ -44,6 +44,17 @@ def test_list_runs_respects_limit():
     assert len(runner.list_runs(limit=2)) == 2
 
 
+def test_list_runs_respects_offset():
+    first = runner._create_run_row("first", "gpt-4o-mini", None)
+    second = runner._create_run_row("second", "gpt-4o-mini", None)
+    third = runner._create_run_row("third", "gpt-4o-mini", None)
+
+    runs = runner.list_runs(offset=1)
+
+    assert [r.id for r in runs][:2] == [second.id, first.id]
+    assert third.id not in [r.id for r in runs]
+
+
 def test_set_status_updates_run():
     run = runner._create_run_row("q", "gpt-4o-mini", None)
 
