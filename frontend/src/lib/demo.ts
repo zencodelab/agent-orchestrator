@@ -209,6 +209,10 @@ export async function demoGetRun(id: string): Promise<RunDetail> {
   return run;
 }
 
+export async function demoDeleteRun(id: string): Promise<void> {
+  saveAll(loadAll().filter((r) => r.id !== id));
+}
+
 /**
  * Replays a stored run's events with delays to recreate the live streaming feel.
  * Mirrors the real SSE hook's contract: returns a cancel function.
