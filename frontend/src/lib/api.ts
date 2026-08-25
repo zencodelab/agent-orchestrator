@@ -1,6 +1,7 @@
 import {
   DEMO,
   demoCreateRun,
+  demoDeleteRun,
   demoGetRun,
   demoHealth,
   demoListRuns,
@@ -47,6 +48,13 @@ export const api = {
   getRun(id: string): Promise<RunDetail> {
     if (DEMO) return demoGetRun(id);
     return fetch(`${BASE}/api/runs/${id}`).then((r) => json<RunDetail>(r));
+  },
+
+  deleteRun(id: string): Promise<void> {
+    if (DEMO) return demoDeleteRun(id);
+    return fetch(`${BASE}/api/runs/${id}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    });
   },
 
   streamUrl(id: string, lastSeq: number): string {

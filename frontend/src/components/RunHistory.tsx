@@ -1,4 +1,4 @@
-import { Loader2, Plus, Workflow } from "lucide-react";
+import { Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export function RunHistory() {
   const reset = useRunStore((s) => s.reset);
   const attachToLiveRun = useRunStore((s) => s.attachToLiveRun);
   const loadCompletedRun = useRunStore((s) => s.loadCompletedRun);
+  const setHistory = useRunStore((s) => s.setHistory);
 
   async function open(summary: RunSummary) {
     if (summary.id === currentRunId) return;
@@ -42,6 +43,19 @@ export function RunHistory() {
       loadCompletedRun(detail);
     } catch {
       /* ignore — keep current view */
+    }
+  }
+
+  async function remove(summary: RunSummary, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (summary.status === "running" || summary.status === "pending") return;
+    if (!confirm(`Delete this run?\n\n"${summary.query}"`)) return;
+    try {
+      await api.deleteRun(summary.id);
+      setHistory(history.filter((r) => r.id !== summary.id));
+      if (summary.id === currentRunId) reset();
+    } catch {
+      /* ignore — leave it in the list to retry */
     }
   }
 
@@ -64,14 +78,14 @@ export function RunHistory() {
         ) : (
           <ul className="divide-y divide-border/60">
             {history.map((run) => (
-              <li key={run.id}>
+              <li key={run.id} className="group relative">
                 <button
                   type="button"
                   onClick={() => void open(run)}
                   aria-current={run.id === currentRunId ? "true" : undefined}
                   aria-label={`${run.query} — ${run.status}, ${formatTime(run.created_at)}`}
                   className={cn(
-                    "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
+                    "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 pr-8 text-left transition-colors hover:bg-accent/60",
                     run.id === currentRunId && "bg-accent/80",
                   )}
                 >
@@ -88,6 +102,17 @@ export function RunHistory() {
                     </span>
                   </span>
                 </button>
+                {run.status !== "running" && run.status !== "pending" && (
+                  <button
+                    type="button"
+                    onClick={(e) => void remove(run, e)}
+                    aria-label={`Delete run: ${run.query}`}
+                    title="Delete run"
+                    className="absolute right-2 top-2.5 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </li>
             ))}
           </ul>
