@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlmodel import Field, SQLModel
 
 
@@ -60,12 +60,22 @@ class RunEvent(SQLModel, table=True):
 # Kept in sync with the frontend's RunInput character counter/cap.
 MAX_QUERY_LENGTH = 2000
 
+# Kept in sync with the frontend's ModelId union in lib/types.ts.
+ALLOWED_MODELS = {"gpt-4o-mini", "gpt-4o"}
+
 
 class CreateRunRequest(BaseModel):
     query: str = Field(max_length=MAX_QUERY_LENGTH)
     model: str = "gpt-4o-mini"
     # Only used for demoing the error path; the UI never sets it.
     simulate_error: Optional[str] = None
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        if v not in ALLOWED_MODELS:
+            raise ValueError(f"model must be one of {sorted(ALLOWED_MODELS)}")
+        return v
 
 
 class CreateRunResponse(BaseModel):
