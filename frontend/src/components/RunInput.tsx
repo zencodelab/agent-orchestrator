@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,27 @@ export function RunInput() {
   const [error, setError] = useState<string | null>(null);
   const isRunning = runStatus === "running" || submitting;
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Press "/" anywhere (outside a field) to jump to the query input.
+  useEffect(() => {
+    function onGlobalKeyDown(e: KeyboardEvent) {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
+      }
+      e.preventDefault();
+      textareaRef.current?.focus();
+    }
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => window.removeEventListener("keydown", onGlobalKeyDown);
+  }, []);
+
   const isOverLimit = query.length > MAX_QUERY_LENGTH;
 
   async function run() {
@@ -58,10 +79,11 @@ export function RunInput() {
   return (
     <div className="border-b border-border bg-card/40 p-4">
       <Textarea
+        ref={textareaRef}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="Describe a goal for the agent pipeline…  (⌘/Ctrl + Enter to run)"
+        placeholder="Describe a goal for the agent pipeline…  (press / to focus · ⌘/Ctrl + Enter to run)"
         className="min-h-[72px] resize-none"
         disabled={isRunning}
       />
