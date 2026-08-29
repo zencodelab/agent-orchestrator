@@ -168,10 +168,22 @@ export function LogPanel() {
   const finalOutput = useRunStore((s) => s.finalOutput);
   const runStatus = useRunStore((s) => s.runStatus);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Whether the view is pinned to the bottom. Stays true until the user
+  // scrolls up, so live streaming never yanks them away from earlier output.
+  const stickToBottom = useRef(true);
 
-  // Auto-scroll to the newest tokens while a run is streaming.
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottom.current = distanceFromBottom < 80;
+  }
+
+  // Auto-scroll to the newest tokens while a run is streaming, but only when
+  // the user hasn't scrolled up to inspect an earlier part of the log.
   useEffect(() => {
-    if (runStatus === "running") {
+    if (runStatus === "running" && stickToBottom.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [logs, nodes, runStatus]);
@@ -186,7 +198,7 @@ export function LogPanel() {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto">
       {PIPELINE.map((id) => (
         <AgentLog key={id} node={id} runtime={nodes[id]} text={logs[id]} />
       ))}
