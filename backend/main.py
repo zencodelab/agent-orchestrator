@@ -158,11 +158,36 @@ def _sse(ev: dict) -> str:
     return f"id: {ev['seq']}\ndata: {json.dumps(ev)}\n\n"
 
 
+def _resume_point(query_value: int, header_value: str | None) -> int:
+    """Resolve the resume cursor for an SSE (re)connection.
+
+    A browser's native ``EventSource`` automatically replays the last seen id via
+    the standard ``Last-Event-ID`` request header on reconnect, while our
+    fetch-based client passes ``?last_event_id=``. Honour whichever is present,
+    preferring the explicit query param, and never trust a negative or
+    non-numeric value.
+    """
+    if query_value > 0:
+        return query_value
+    if header_value:
+        try:
+            return max(0, int(header_value))
+        except ValueError:
+            return 0
+    return 0
+
+
 @app.get("/api/runs/{run_id}/stream")
-async def stream_run(run_id: str, request: Request, last_event_id: int = 0):
+async def stream_run(
+    run_id: str,
+    request: Request,
+    last_event_id: int = Query(default=0, ge=0),
+):
     run = await asyncio.to_thread(runner.get_run, run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
+
+    last_event_id = _resume_point(last_event_id, request.headers.get("last-event-id"))
 
     async def event_gen():
         channel = runner.run_manager.get_channel(run_id)
