@@ -1,10 +1,11 @@
 """AgentForge FastAPI application: run lifecycle + SSE streaming.
 
 Endpoints
-  POST /api/runs                 -> start a run, returns {run_id, status}
-  GET  /api/runs                 -> list past runs (newest first)
-  GET  /api/runs/{id}            -> full detail (all events + final output)
-  GET  /api/runs/{id}/stream     -> SSE stream of execution events
+  POST   /api/runs               -> start a run, returns {run_id, status}
+  GET    /api/runs               -> list past runs (newest first); optional ?limit & ?status
+  GET    /api/runs/{id}          -> full detail (all events + final output)
+  DELETE /api/runs/{id}          -> delete a finished run (404 unknown, 409 in progress)
+  GET    /api/runs/{id}/stream   -> SSE stream of execution events
 """
 from __future__ import annotations
 

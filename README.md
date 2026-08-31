@@ -123,11 +123,12 @@ The frontend talks to `/api` on its own origin by default (dev proxy in `vite.co
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/runs` | Start a run. Body: `{ query, model, simulate_error? }`. Returns `{ run_id, status }`. |
-| `GET`  | `/api/runs/{id}/stream?last_event_id=N` | SSE stream; replays events after `N`, then streams live. |
-| `GET`  | `/api/runs` | List past runs (newest first). |
-| `GET`  | `/api/runs/{id}` | Full run detail: all events + final output. |
-| `GET`  | `/api/health` | Status + whether mock LLM / real search are active. |
+| `POST`   | `/api/runs` | Start a run. Body: `{ query, model, simulate_error? }`. Returns `{ run_id, status }`. |
+| `GET`    | `/api/runs/{id}/stream?last_event_id=N` | SSE stream; replays events after `N`, then streams live. |
+| `GET`    | `/api/runs?limit=N&status=…` | List past runs (newest first). Optional `limit` (1–200, default 50) and `status` (`pending`/`running`/`completed`/`error`) filter. |
+| `GET`    | `/api/runs/{id}` | Full run detail: all events + final output. |
+| `DELETE` | `/api/runs/{id}` | Delete a finished run and its events. `404` if unknown, `409` if still in progress. |
+| `GET`    | `/api/health` | Status + whether mock LLM / real search are active. |
 
 ```bash
 # Try it from the shell (mock mode):
