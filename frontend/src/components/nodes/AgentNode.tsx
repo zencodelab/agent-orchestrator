@@ -33,6 +33,13 @@ const ROLE_BLURB: Record<NodeId, string> = {
   synthesizer: "Writes the answer",
 };
 
+const STATUS_LABEL: Record<NodeStatus, string> = {
+  idle: "waiting",
+  active: "in progress",
+  done: "complete",
+  error: "failed",
+};
+
 const CONTAINER_BY_STATUS: Record<NodeStatus, string> = {
   idle: "border-slate-600 bg-slate-800/40",
   active: "border-blue-400 bg-blue-950/60 animate-pulse-ring",
@@ -43,13 +50,13 @@ const CONTAINER_BY_STATUS: Record<NodeStatus, string> = {
 function StatusIcon({ status }: { status: NodeStatus }) {
   switch (status) {
     case "active":
-      return <Loader2 className="h-4 w-4 animate-spin text-blue-400" />;
+      return <Loader2 aria-hidden className="h-4 w-4 animate-spin text-blue-400" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 aria-hidden className="h-4 w-4 text-emerald-400" />;
     case "error":
-      return <XCircle className="h-4 w-4 text-red-400" />;
+      return <XCircle aria-hidden className="h-4 w-4 text-red-400" />;
     default:
-      return <Circle className="h-4 w-4 text-slate-500" />;
+      return <Circle aria-hidden className="h-4 w-4 text-slate-500" />;
   }
 }
 
@@ -59,6 +66,8 @@ function AgentNodeComponent({ data }: NodeProps<AgentNodeData>) {
 
   return (
     <div
+      role="group"
+      aria-label={`${data.label} agent — ${STATUS_LABEL[data.status]}: ${subtitle}`}
       className={cn(
         "w-52 rounded-xl border-2 px-4 py-3 text-slate-100 shadow-lg transition-colors duration-300",
         CONTAINER_BY_STATUS[data.status],
@@ -68,7 +77,7 @@ function AgentNodeComponent({ data }: NodeProps<AgentNodeData>) {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <RoleIcon className="h-4 w-4 text-slate-300" />
+          <RoleIcon aria-hidden className="h-4 w-4 text-slate-300" />
           <span className="text-sm font-semibold">{data.label}</span>
         </div>
         <StatusIcon status={data.status} />
