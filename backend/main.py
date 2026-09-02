@@ -42,6 +42,9 @@ settings = get_settings()
 # we notice a finished run whose end-sentinel we may have missed on (re)connect.
 KEEPALIVE_SECS = 12
 
+# Process start time, used to report uptime on the health endpoint.
+_STARTED_AT = time.monotonic()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -85,7 +88,14 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/api/health")
 async def health() -> dict:
-    return {"status": "ok", "mock_mode": settings.mock_mode, "real_search": settings.use_real_search}
+    """Liveness probe plus a little runtime context for monitoring dashboards."""
+    return {
+        "status": "ok",
+        "version": app.version,
+        "uptime_seconds": round(time.monotonic() - _STARTED_AT, 1),
+        "mock_mode": settings.mock_mode,
+        "real_search": settings.use_real_search,
+    }
 
 
 # --------------------------------------------------------------------------- #

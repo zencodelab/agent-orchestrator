@@ -127,7 +127,7 @@ The frontend talks to `/api` on its own origin by default (dev proxy in `vite.co
 | `GET`  | `/api/runs/{id}/stream?last_event_id=N` | SSE stream; replays events after `N`, then streams live. |
 | `GET`  | `/api/runs` | List past runs (newest first). |
 | `GET`  | `/api/runs/{id}` | Full run detail: all events + final output. |
-| `GET`  | `/api/health` | Status + whether mock LLM / real search are active. |
+| `GET`  | `/api/health` | Status, app version, uptime, and whether mock LLM / real search are active. |
 
 ```bash
 # Try it from the shell (mock mode):
