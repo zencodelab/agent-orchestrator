@@ -31,6 +31,7 @@ export function RunInput() {
   const isRunning = runStatus === "running" || submitting;
 
   const isOverLimit = query.length > MAX_QUERY_LENGTH;
+  const showCounter = query.length > MAX_QUERY_LENGTH * WARN_THRESHOLD;
 
   async function run() {
     const q = query.trim();
@@ -58,12 +59,16 @@ export function RunInput() {
   return (
     <div className="border-b border-border bg-card/40 p-4">
       <Textarea
+        id="pipeline-goal"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder="Describe a goal for the agent pipeline…  (⌘/Ctrl + Enter to run)"
         className="min-h-[72px] resize-none"
         disabled={isRunning}
+        aria-label="Agent pipeline goal"
+        aria-invalid={isOverLimit || undefined}
+        aria-describedby={showCounter ? "query-counter" : undefined}
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -116,8 +121,9 @@ export function RunInput() {
         ) : (
           <span />
         )}
-        {query.length > MAX_QUERY_LENGTH * WARN_THRESHOLD && (
+        {showCounter && (
           <span
+            id="query-counter"
             className={`text-xs ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}
             aria-live="polite"
           >
