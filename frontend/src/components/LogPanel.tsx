@@ -102,17 +102,31 @@ const MD_COMPONENTS = {
   ),
 };
 
+type CopyState = "idle" | "copied" | "failed";
+
+/** Local timestamp as YYYYMMDD-HHMMSS, for a unique download filename. */
+function fileStamp(): string {
+  const d = new Date();
+  const p = (n: number) => n.toString().padStart(2, "0");
+  return (
+    `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}` +
+    `-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  );
+}
+
 function FinalAnswer({ markdown }: { markdown: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(markdown);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setCopyState("copied");
     } catch {
-      /* clipboard unavailable (e.g. insecure context) — fail silently */
+      // clipboard unavailable (e.g. insecure context) — surface it so the
+      // user knows to select the text manually instead of assuming success.
+      setCopyState("failed");
     }
+    setTimeout(() => setCopyState("idle"), 1500);
   }
 
   function handleDownload() {
@@ -120,7 +134,7 @@ function FinalAnswer({ markdown }: { markdown: string }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "final-answer.md";
+    link.download = `final-answer-${fileStamp()}.md`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -148,8 +162,14 @@ function FinalAnswer({ markdown }: { markdown: string }) {
             aria-label="Copy final answer to clipboard"
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied" : "Copy"}
+            {copyState === "copied" ? (
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+            ) : copyState === "failed" ? (
+              <XCircle className="h-3.5 w-3.5 text-red-400" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copyState === "copied" ? "Copied" : copyState === "failed" ? "Failed" : "Copy"}
           </button>
         </div>
       </div>
