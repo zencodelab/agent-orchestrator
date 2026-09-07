@@ -1,7 +1,8 @@
-import { Loader2, Plus, Workflow } from "lucide-react";
+import { AlertCircle, Loader2, Plus, RefreshCw, Workflow } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useRunHistory } from "@/hooks/useRunHistory";
 import { api } from "@/lib/api";
 import type { RunStatus, RunSummary } from "@/lib/types";
 import { cn, formatDuration, formatTime } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function RunHistory() {
   const reset = useRunStore((s) => s.reset);
   const attachToLiveRun = useRunStore((s) => s.attachToLiveRun);
   const loadCompletedRun = useRunStore((s) => s.loadCompletedRun);
+  const { refresh, loading, error } = useRunHistory();
 
   async function open(summary: RunSummary) {
     if (summary.id === currentRunId) return;
@@ -59,7 +61,28 @@ export function RunHistory() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {history.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 p-4 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading…
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-start gap-2 p-4">
+            <div className="flex items-center gap-1.5 text-xs text-destructive">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => void refresh()}
+            >
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </Button>
+          </div>
+        ) : history.length === 0 ? (
           <p className="p-4 text-xs text-muted-foreground">No runs yet. Start one above.</p>
         ) : (
           <ul className="divide-y divide-border/60">
