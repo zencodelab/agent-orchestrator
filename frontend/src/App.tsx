@@ -6,7 +6,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LogPanel } from "@/components/LogPanel";
 import { RunHistory } from "@/components/RunHistory";
 import { RunInput } from "@/components/RunInput";
-import { useRunHistory } from "@/hooks/useRunHistory";
 import { useSSEStream } from "@/hooks/useSSEStream";
 import { api } from "@/lib/api";
 import type { HealthResponse } from "@/lib/types";
@@ -43,7 +42,6 @@ function Header({ health }: { health: HealthResponse | null }) {
 
 export default function App() {
   useSSEStream();
-  useRunHistory();
 
   const [health, setHealth] = useState<HealthResponse | null>(null);
   useEffect(() => {
