@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, CheckCircle2, Circle, Copy, Download, Loader2, Sparkles, XCircle } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, ChevronRight, Circle, Copy, Download, Loader2, Sparkles, XCircle } from "lucide-react";
 
 import { NODE_LABELS, PIPELINE, type NodeId, type NodeStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -41,28 +41,52 @@ function StreamBody({ text }: { text: string }) {
 
 function AgentLog({ node, runtime, text }: { node: NodeId; runtime: NodeRuntime; text: string }) {
   const hasContent = text.length > 0 || runtime.status !== "idle";
+  // Collapsed by default only while idle; auto-expand when the node becomes active.
+  const [collapsed, setCollapsed] = useState(runtime.status === "idle");
+
+  useEffect(() => {
+    if (runtime.status === "active") setCollapsed(false);
+  }, [runtime.status]);
+
   return (
     <div className="border-b border-border/60">
-      <div className="sticky top-0 z-10 flex items-center gap-2 bg-card/95 px-4 py-2 backdrop-blur">
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        aria-expanded={!collapsed}
+        aria-controls={`agent-log-body-${node}`}
+        className="sticky top-0 z-10 flex w-full items-center gap-2 bg-card/95 px-4 py-2 backdrop-blur transition-colors hover:bg-accent/30"
+      >
         <StatusDot status={runtime.status} />
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-200">
           {NODE_LABELS[node]}
         </span>
         {runtime.status === "active" && runtime.statusMessage && (
-          <span className="truncate text-xs text-muted-foreground">{runtime.statusMessage}</span>
+          <span className="min-w-0 flex-1 truncate text-left text-xs text-muted-foreground">
+            {runtime.statusMessage}
+          </span>
         )}
-      </div>
-      <div className="px-4 pb-3">
-        {runtime.error ? (
-          <p className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-            {runtime.error}
-          </p>
-        ) : hasContent ? (
-          <StreamBody text={text} />
-        ) : (
-          <p className="text-xs text-slate-600">waiting…</p>
-        )}
-      </div>
+        <span className="ml-auto text-muted-foreground">
+          {collapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+          )}
+        </span>
+      </button>
+      {!collapsed && (
+        <div id={`agent-log-body-${node}`} className="px-4 pb-3">
+          {runtime.error ? (
+            <p className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {runtime.error}
+            </p>
+          ) : hasContent ? (
+            <StreamBody text={text} />
+          ) : (
+            <p className="text-xs text-slate-600">waiting…</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
