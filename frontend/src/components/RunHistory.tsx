@@ -1,4 +1,4 @@
-import { Loader2, Plus, Workflow } from "lucide-react";
+import { CornerUpLeft, Loader2, Plus, Workflow } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,13 @@ function StatusBadge({ status }: { status: RunStatus }) {
 export function RunHistory() {
   const history = useRunStore((s) => s.history);
   const currentRunId = useRunStore((s) => s.currentRunId);
+  const runStatus = useRunStore((s) => s.runStatus);
   const reset = useRunStore((s) => s.reset);
+  const setQuery = useRunStore((s) => s.setQuery);
   const attachToLiveRun = useRunStore((s) => s.attachToLiveRun);
   const loadCompletedRun = useRunStore((s) => s.loadCompletedRun);
+
+  const isRunning = runStatus === "running";
 
   async function open(summary: RunSummary) {
     if (summary.id === currentRunId) return;
@@ -64,14 +68,14 @@ export function RunHistory() {
         ) : (
           <ul className="divide-y divide-border/60">
             {history.map((run) => (
-              <li key={run.id}>
+              <li key={run.id} className="group relative">
                 <button
                   type="button"
                   onClick={() => void open(run)}
                   aria-current={run.id === currentRunId ? "true" : undefined}
                   aria-label={`${run.query} — ${run.status}, ${formatTime(run.created_at)}`}
                   className={cn(
-                    "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
+                    "flex w-full flex-col items-start gap-1.5 px-3 py-2.5 pr-8 text-left transition-colors hover:bg-accent/60",
                     run.id === currentRunId && "bg-accent/80",
                   )}
                 >
@@ -87,6 +91,26 @@ export function RunHistory() {
                       {formatTime(run.created_at)}
                     </span>
                   </span>
+                </button>
+                {/* Reuse-query button — visible on hover/focus so it doesn't clutter the list */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQuery(run.query);
+                    reset();
+                    document.getElementById("query-textarea")?.focus();
+                  }}
+                  disabled={isRunning}
+                  title="Copy query to input"
+                  aria-label={`Reuse query: ${run.query}`}
+                  className={cn(
+                    "absolute right-2 top-2.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity",
+                    "hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    "group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30",
+                  )}
+                >
+                  <CornerUpLeft className="h-3.5 w-3.5" />
                 </button>
               </li>
             ))}

@@ -58,6 +58,7 @@ export function RunInput() {
   return (
     <div className="border-b border-border bg-card/40 p-4">
       <Textarea
+        id="query-textarea"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
