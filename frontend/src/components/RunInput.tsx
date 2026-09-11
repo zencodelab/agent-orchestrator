@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Play } from "lucide-react";
+import { Loader2, Play, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -25,12 +25,14 @@ export function RunInput() {
   const setModel = useRunStore((s) => s.setModel);
   const beginRun = useRunStore((s) => s.beginRun);
   const setHistory = useRunStore((s) => s.setHistory);
+  const reset = useRunStore((s) => s.reset);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isRunning = runStatus === "running" || submitting;
 
   const isOverLimit = query.length > MAX_QUERY_LENGTH;
+  const isFinished = runStatus === "completed" || runStatus === "error";
 
   async function run() {
     const q = query.trim();
@@ -90,6 +92,17 @@ export function RunInput() {
             </>
           )}
         </Button>
+
+        {isFinished && (
+          <Button
+            variant="outline"
+            onClick={reset}
+            aria-label="Clear current run and start fresh"
+          >
+            <PlusCircle className="h-4 w-4" />
+            New Run
+          </Button>
+        )}
 
         <div className="ml-auto hidden items-center gap-1 text-xs text-muted-foreground md:flex">
           <span>Try:</span>
