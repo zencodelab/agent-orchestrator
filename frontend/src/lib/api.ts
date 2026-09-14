@@ -39,9 +39,10 @@ export const api = {
     }).then((r) => json<CreateRunResponse>(r));
   },
 
-  listRuns(): Promise<RunSummary[]> {
+  listRuns(status?: RunSummary["status"]): Promise<RunSummary[]> {
     if (DEMO) return demoListRuns();
-    return fetch(`${BASE}/api/runs`).then((r) => json<RunSummary[]>(r));
+    const url = status ? `${BASE}/api/runs?status=${status}` : `${BASE}/api/runs`;
+    return fetch(url).then((r) => json<RunSummary[]>(r));
   },
 
   getRun(id: string): Promise<RunDetail> {

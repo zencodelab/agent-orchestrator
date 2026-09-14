@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Loader2, Plus, Workflow } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,14 @@ const BADGE_VARIANT: Record<RunStatus, "idle" | "running" | "completed" | "error
   error: "error",
 };
 
+type FilterStatus = RunStatus | "all";
+const FILTERS: { label: string; value: FilterStatus }[] = [
+  { label: "All", value: "all" },
+  { label: "Running", value: "running" },
+  { label: "Done", value: "completed" },
+  { label: "Error", value: "error" },
+];
+
 function StatusBadge({ status }: { status: RunStatus }) {
   return (
     <Badge variant={BADGE_VARIANT[status]}>
@@ -27,8 +36,21 @@ export function RunHistory() {
   const history = useRunStore((s) => s.history);
   const currentRunId = useRunStore((s) => s.currentRunId);
   const reset = useRunStore((s) => s.reset);
+  const setHistory = useRunStore((s) => s.setHistory);
   const attachToLiveRun = useRunStore((s) => s.attachToLiveRun);
   const loadCompletedRun = useRunStore((s) => s.loadCompletedRun);
+
+  const [filter, setFilter] = useState<FilterStatus>("all");
+
+  async function applyFilter(value: FilterStatus) {
+    setFilter(value);
+    try {
+      const runs = await api.listRuns(value === "all" ? undefined : value);
+      setHistory(runs);
+    } catch {
+      /* keep current list on error */
+    }
+  }
 
   async function open(summary: RunSummary) {
     if (summary.id === currentRunId) return;
@@ -47,15 +69,35 @@ export function RunHistory() {
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-border bg-card/30">
-      <div className="flex items-center justify-between gap-2 border-b border-border p-3">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Workflow className="h-4 w-4 text-primary" />
-          Run History
+      <div className="border-b border-border">
+        <div className="flex items-center justify-between gap-2 p-3 pb-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Workflow className="h-4 w-4 text-primary" />
+            Run History
+          </div>
+          <Button variant="outline" size="sm" onClick={reset} title="Start a new run">
+            <Plus className="h-3.5 w-3.5" />
+            New
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={reset} title="Start a new run">
-          <Plus className="h-3.5 w-3.5" />
-          New
-        </Button>
+        <div className="flex gap-1 px-3 pb-2" role="group" aria-label="Filter runs by status">
+          {FILTERS.map(({ label, value }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => void applyFilter(value)}
+              aria-pressed={filter === value}
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors",
+                filter === value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
